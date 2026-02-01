@@ -218,21 +218,32 @@ class VideoAnimationEngine:
         print(f"Saved animation video as {output_video_path}")
 
 
-def project_to_keyframe(x, y, z, width=1920, height=1080, fov_deg=65):
+def project_to_keyframe(x, y, z, width=1920, height=1080, fov_deg=65, cam_pos=( -5, 0, 0 ), cam_euler=(10, 0, 0)):
     """
-    Project real-world (x, y, z) to normalized keyframe coordinates using a simple pinhole camera model.
-    Camera at origin, looking down range +x, y is right, z is up.
-    width, height: video resolution
-    fov_deg: horizontal field of view in degrees (iPhone 1x ~65°)
-    Returns: (x_norm, y_norm) in [0,1]
+    Project real-world (x, y, z) to normalized keyframe coordinates using a pinhole camera model.
+    Camera at cam_pos (x, y, z), with euler angles (pitch, yaw, roll) in degrees.
+    Default: camera is 5m behind ball, pitched down 10 deg.
     """
-    f = (width / 2) / np.tan(np.radians(fov_deg) / 2)  # focal length in pixels
-    if x <= 0.1:  # avoid division by zero, clamp to near plane
-        x = 0.1
-    x_img = f * y / x + width / 2
-    y_img = f * (-z) / x + height / 2  # -z: image y increases downward
-    x_norm = np.clip(x_img / width, 0, 2.0)
-    y_norm = np.clip(y_img / height, 0, 2.0)
+    # Camera extrinsics
+    cam_x, cam_y, cam_z = cam_pos
+    pitch, yaw, roll = np.radians(cam_euler)
+    # Translate ball position to camera coordinates
+    pt = np.array([x - cam_x, y - cam_y, z - cam_z])
+    # Rotation matrix (ZYX order: roll, pitch, yaw)
+    Rx = np.array([[1,0,0],[0,np.cos(pitch),-np.sin(pitch)],[0,np.sin(pitch),np.cos(pitch)]])
+    Ry = np.array([[np.cos(yaw),0,np.sin(yaw)],[0,1,0],[-np.sin(yaw),0,np.cos(yaw)]])
+    Rz = np.array([[np.cos(roll),-np.sin(roll),0],[np.sin(roll),np.cos(roll),0],[0,0,1]])
+    R = Rz @ Ry @ Rx
+    pt_cam = R @ pt
+    x_c, y_c, z_c = pt_cam
+    # Pinhole projection
+    f = (width / 2) / np.tan(np.radians(fov_deg) / 2)
+    if x_c <= 0.1:
+        x_c = 0.1
+    x_img = f * y_c / x_c + width / 2
+    y_img = f * (-z_c) / x_c + height / 2
+    x_norm = np.clip(x_img / width, 0, 1)
+    y_norm = np.clip(y_img / height, 0, 1)
     return x_norm, y_norm
 
 
@@ -246,18 +257,18 @@ traj = GolfBallTrajectory(
     x0=0, y0=0, z0=0,
     v0=70,  # m/s
     launch_angle_deg=15,
-    azimuth_deg=-5,
-    side_spin_rpm=2000,
+    azimuth_deg=15,
+    side_spin_rpm=-2000,
     back_spin_rpm=3000,
-    dt=0.001
+    dt=0.01
 )
 traj.sim()
 for i in range(len(traj.t)):
     t = traj.t[i]
     x, y, z = traj.x[i], traj.y[i], traj.z[i]
     norm_x, norm_y = project_to_keyframe(x, y, z)
-    color = (255, 0, 0)  # yellow
-    brush_size = 0.1
+    color = (255, 0, 0) 
+    brush_size = 1.0
     engine.add_keyframe({'timestamp': t, 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})
 
 # Save a video showing the golf ball trajectory animation over time using the new method
