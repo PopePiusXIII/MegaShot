@@ -247,31 +247,32 @@ def project_to_keyframe(x, y, z, width=1920, height=1080, fov_deg=65, cam_pos=( 
     return x_norm, y_norm
 
 
-# Example usage: Golf ball trajectory animation using GolfBallTrajectory class
-engine = VideoAnimationEngine("golfVideo.MOV")
+if __name__ == "__main__":
+    # Example usage: Golf ball trajectory animation using GolfBallTrajectory class
+    engine = VideoAnimationEngine("golfVideo.MOV")
 
-# Generate keyframes from golf ball trajectory
-T_max = 3.0  # seconds
-traj = GolfBallTrajectory(
-    t_max=T_max,
-    x0=0, y0=0, z0=0,
-    v0=70,  # m/s
-    launch_angle_deg=15,
-    azimuth_deg=15,
-    side_spin_rpm=-2000,
-    back_spin_rpm=3000,
-    dt=0.01
-)
-traj.sim()
-for i in range(len(traj.t)):
-    t = traj.t[i]
-    x, y, z = traj.x[i], traj.y[i], traj.z[i]
-    norm_x, norm_y = project_to_keyframe(x, y, z)
-    color = (255, 0, 0) 
-    brush_size = 1.0
-    engine.add_keyframe({'timestamp': t, 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})
+    # Generate keyframes from golf ball trajectory
+    T_max = 3.0  # seconds
+    traj = GolfBallTrajectory(
+        t_max=T_max,
+        x0=0, y0=0, z0=0,
+        v0=70,  # m/s
+        launch_angle_deg=15,
+        azimuth_deg=15,
+        side_spin_rpm=-2000,
+        back_spin_rpm=3000,
+        dt=0.01
+    )
+    traj.sim()
+    for i in range(len(traj.t)):
+        t = traj.t[i]
+        x, y, z = traj.x[i], traj.y[i], traj.z[i]
+        norm_x, norm_y = project_to_keyframe(x, y, z)
+        color = (255, 0, 0) 
+        brush_size = 1.0
+        engine.add_keyframe({'timestamp': t, 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})
 
-# Save a video showing the golf ball trajectory animation over time using the new method
-output_video_path = "golfVideoOut.mp4"
-duration = T_max
-engine.save_animation_video(output_video_path, duration, show_trail=True, samples=80)
+    # Save a video showing the golf ball trajectory animation over time using the new method
+    output_video_path = "golfVideoOut.mp4"
+    duration = T_max
+    engine.save_animation_video(output_video_path, duration, show_trail=True, samples=80)
