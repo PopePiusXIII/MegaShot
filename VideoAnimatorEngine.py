@@ -186,6 +186,29 @@ class VideoAnimationEngine:
 
         return out
 
+    def render_full_trajectory_overlay(self, frame: np.ndarray, color: tuple = (0,255,255), brush_size: float = 1.0) -> np.ndarray:
+        """
+        Draws the entire trajectory by connecting all keyframes, regardless of timestamp.
+        - Draws a polyline or series of circles for all keyframes in self.keyframes.
+        - color and brush_size can override keyframe values if desired.
+        Returns annotated frame (does not modify input).
+        """
+        out = frame.copy()
+        h, w = out.shape[:2]
+        if len(self.keyframes) < 2:
+            return out
+        pts = []
+        for kf in self.keyframes:
+            px = int(round(kf["x"] * w))
+            py = int(round(kf["y"] * h))
+            pts.append((px, py))
+        # Draw polyline
+        cv2.polylines(out, [np.array(pts, dtype=np.int32)], isClosed=False, color=color, thickness=max(1, int(round(self._brush_pixels(brush_size, out.shape)))))
+        # Optionally, draw circles at each keyframe
+        for pt in pts:
+            cv2.circle(out, pt, max(1, int(round(self._brush_pixels(brush_size, out.shape)))), color=color, thickness=-1, lineType=cv2.LINE_AA)
+        return out
+
     def save_animation_video(self, output_video_path: str, duration: float, fps: float = None, show_trail: bool = True, samples: int = 80):
         """
         Save an animation video with overlays to the specified path.
@@ -218,25 +241,29 @@ class VideoAnimationEngine:
         print(f"Saved animation video as {output_video_path}")
 
 
-def project_to_keyframe(x, y, z, width=1920, height=1080, fov_deg=65, cam_pos=( -5, 0, 0 ), cam_euler=(10, 0, 0)):
+def project_to_keyframe(x, y, z, width=1080, height=1920, fov_deg=45, cam_pos=(-5, 0, 2), cam_euler=(0, -20, 0)):
     """
     Project real-world (x, y, z) to normalized keyframe coordinates using a pinhole camera model.
-    Camera at cam_pos (x, y, z), with euler angles (pitch, yaw, roll) in degrees.
-    Default: camera is 5m behind ball, pitched down 10 deg.
+    Camera at cam_pos (x, y, z), with euler angles (yaw, pitch, roll) in degrees (FLU/aerospace convention).
+    Rotation order: yaw (about Z), then pitch (about Y), then roll (about X).
     """
-    # Camera extrinsics
     cam_x, cam_y, cam_z = cam_pos
-    pitch, yaw, roll = np.radians(cam_euler)
-    # Translate ball position to camera coordinates
+    yaw, pitch, roll = np.radians(cam_euler)  # Yaw, Pitch, Roll order
     pt = np.array([x - cam_x, y - cam_y, z - cam_z])
-    # Rotation matrix (ZYX order: roll, pitch, yaw)
-    Rx = np.array([[1,0,0],[0,np.cos(pitch),-np.sin(pitch)],[0,np.sin(pitch),np.cos(pitch)]])
-    Ry = np.array([[np.cos(yaw),0,np.sin(yaw)],[0,1,0],[-np.sin(yaw),0,np.cos(yaw)]])
-    Rz = np.array([[np.cos(roll),-np.sin(roll),0],[np.sin(roll),np.cos(roll),0],[0,0,1]])
-    R = Rz @ Ry @ Rx
+    # Rotation matrices (FLU convention)
+    Rz = np.array([[np.cos(yaw), -np.sin(yaw), 0],
+                   [np.sin(yaw),  np.cos(yaw), 0],
+                   [0, 0, 1]])
+    Ry = np.array([[np.cos(pitch), 0, np.sin(pitch)],
+                   [0, 1, 0],
+                   [-np.sin(pitch), 0, np.cos(pitch)]])
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(roll), -np.sin(roll)],
+                   [0, np.sin(roll),  np.cos(roll)]])
+    # Apply yaw (Z), then pitch (Y), then roll (X)
+    R = Rx @ Ry @ Rz
     pt_cam = R @ pt
     x_c, y_c, z_c = pt_cam
-    # Pinhole projection
     f = (width / 2) / np.tan(np.radians(fov_deg) / 2)
     if x_c <= 0.1:
         x_c = 0.1
