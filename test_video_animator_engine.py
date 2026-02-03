@@ -5,7 +5,7 @@ from VideoAnimatorEngine import project_to_keyframe
 
 # Test parameters
 T_max = 5.0
-v0 = 60  # m/s
+v0 = 75  # m/s
 launch_angle_deg = 15
 azimuth_deg = -10
 side_spin_rpm = -500
