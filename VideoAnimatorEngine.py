@@ -241,7 +241,7 @@ class VideoAnimationEngine:
         print(f"Saved animation video as {output_video_path}")
 
 
-def project_to_keyframe(x, y, z, width=1080, height=1920, fov_deg=45, cam_pos=(-5, 0, 2), cam_euler=(0, -20, 0)):
+def project_to_keyframe(x, y, z, width=1080, height=1920, fov_deg=45, cam_pos=(-5, 0, 2), cam_euler=(0, -15, 0)):
     """
     Project real-world (x, y, z) to normalized keyframe coordinates using a pinhole camera model.
     Camera at cam_pos (x, y, z), with euler angles (yaw, pitch, roll) in degrees (FLU/aerospace convention).
