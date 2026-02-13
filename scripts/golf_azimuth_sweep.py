@@ -2,11 +2,21 @@
 Animated azimuth sweep: renders a new golf ball trajectory for each frame, with azimuth smoothly varying from 0 to -15 to +15 degrees over 3 seconds.
 """
 
+import os
+import sys
+
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+
+# Allow running from repo root without installation.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+SRC_ROOT = os.path.join(REPO_ROOT, "src")
+if SRC_ROOT not in sys.path:
+    sys.path.insert(0, SRC_ROOT)
+
 from golf_ball_trajectory import GolfBallTrajectory
 from VideoAnimatorEngine import VideoAnimationEngine, project_to_keyframe
-import matplotlib.pyplot as plt
 
 def smooth_azimuth(t, T):
     # t in [0, T], returns azimuth in degrees: 0 -> -15 -> +15
@@ -15,7 +25,7 @@ def smooth_azimuth(t, T):
     return -15 * np.sin(np.pi * (t / T) - np.pi/2)
 
 if __name__ == "__main__":
-    video_path = "golfVideo.MOV"
+    video_path = os.path.join(REPO_ROOT, "tests", "data", "videos", "golfVideo.MOV")
     output_video_path = "golfAzimuthSweep.mp4"
     T_max = 3.0  # seconds (video duration)
     traj_t_max = 8.0  # seconds (trajectory simulation duration, should be long enough for ball to land)
