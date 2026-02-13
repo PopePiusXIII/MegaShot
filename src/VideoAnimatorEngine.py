@@ -209,6 +209,62 @@ class VideoAnimationEngine:
             cv2.circle(out, pt, max(1, int(round(self._brush_pixels(brush_size, out.shape)))), color=color, thickness=-1, lineType=cv2.LINE_AA)
         return out
 
+    # -----------------------
+    # Ball detection (single keyframe)
+    # -----------------------
+    def find_golf_ball_in_keyframe(
+        self,
+        frame: np.ndarray,
+        hsv_lower: Tuple[int, int, int] = (0, 0, 180),
+        hsv_upper: Tuple[int, int, int] = (180, 60, 255),
+        min_area: int = 20,
+        max_area: int = 5000,
+        min_circularity: float = 0.5,
+        kernel_size: int = 5,
+    ) -> Optional[Tuple[int, int, int]]:
+        """
+        Find the golf ball in a single frame using color segmentation and contour filtering.
+        Returns (x, y, width) for the center-most candidate, or None if not found.
+        """
+        if frame is None:
+            return None
+
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, np.array(hsv_lower, dtype=np.uint8), np.array(hsv_upper, dtype=np.uint8))
+
+        if kernel_size > 1:
+            k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k)
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            return None
+
+        h, w = mask.shape[:2]
+        cx, cy = w / 2.0, h / 2.0
+        best = None
+        best_dist = None
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < min_area or area > max_area:
+                continue
+            perimeter = cv2.arcLength(cnt, True)
+            if perimeter <= 0:
+                continue
+            circularity = 4 * math.pi * area / (perimeter * perimeter)
+            if circularity < min_circularity:
+                continue
+
+            (x, y), r = cv2.minEnclosingCircle(cnt)
+            dist = (x - cx) ** 2 + (y - cy) ** 2
+            if best is None or dist < best_dist:
+                best = (int(round(x)), int(round(y)), int(round(2 * r)))
+                best_dist = dist
+
+        return best
+
     def save_animation_video(self, output_video_path: str, duration: float, fps: float = None, show_trail: bool = True, samples: int = 80):
         """
         Save an animation video with overlays to the specified path.
