@@ -215,10 +215,10 @@ class VideoAnimationEngine:
     def find_golf_ball_in_keyframe(
         self,
         frame: np.ndarray,
-        hsv_lower: Tuple[int, int, int] = (0, 0, 180),
-        hsv_upper: Tuple[int, int, int] = (180, 60, 255),
-        min_area: int = 20,
-        max_area: int = 5000,
+        hsv_lower: Tuple[int, int, int] = (0, 0, 230),
+        hsv_upper: Tuple[int, int, int] = (255, 60, 255),
+        min_area: int = 5,
+        max_area: int = 250,
         min_circularity: float = 0.5,
         kernel_size: int = 5,
     ) -> Optional[Tuple[int, int, int]]:
