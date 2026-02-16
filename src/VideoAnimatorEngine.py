@@ -55,6 +55,21 @@ class VideoAnimationEngine:
     def clear_keyframes(self):
         self.keyframes.clear()
 
+    def set_keyframes_start_time(self, start_time: float):
+        """
+        Shift all keyframes so the earliest keyframe starts at start_time.
+        If there are no keyframes, this is a no-op.
+        """
+        if not self.keyframes:
+            return
+        current_start = self.keyframes[0]["timestamp"]
+        delta = start_time - current_start
+        if abs(delta) < 1e-12:
+            return
+        for kf in self.keyframes:
+            kf["timestamp"] = float(kf["timestamp"] + delta)
+        self.keyframes.sort(key=lambda k: k["timestamp"])
+
     # -----------------------
     # Interpolation (LERP)
     # -----------------------
@@ -332,7 +347,7 @@ def project_to_keyframe(x, y, z, width=1080, height=1920, fov_deg=45, cam_pos=(-
 
 if __name__ == "__main__":
     # Example usage: Golf ball trajectory animation using GolfBallTrajectory class
-    engine = VideoAnimationEngine("golfVideo.MOV")
+    engine = VideoAnimationEngine("tests/data/videos/golfVideo.MOV")
 
     # Generate keyframes from golf ball trajectory
     T_max = 3.0  # seconds
@@ -354,6 +369,9 @@ if __name__ == "__main__":
         color = (255, 0, 0) 
         brush_size = 1.0
         engine.add_keyframe({'timestamp': t, 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})
+
+    # Align the trajectory start time to 0 seconds
+    engine.set_keyframes_start_time(2.0)
 
     # Save a video showing the golf ball trajectory animation over time using the new method
     output_video_path = "golfVideoOut.mp4"
