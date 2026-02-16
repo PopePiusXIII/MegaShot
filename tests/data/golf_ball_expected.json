@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "video": "videos/IMG_0056.MOV",
+      "frame_index": 600,
+      "x": 968,
+      "y": 734,
+      "width": 11,
+      "tol_xy": 5,
+      "tol_w": 5,
+      "hsv_lower": [0, 0, 230],
+      "hsv_upper": [255, 60, 255],
+      "min_area": 20,
+      "max_area": 250,
+      "min_circularity": 0.5,
+      "kernel_size": 5
+    }
+  ]
+}
