@@ -1,0 +1,49 @@
+{
+  "video": "tests/data/videos/golfVideo.MOV",
+  "start_keyframe_time": 2.0,
+  "trajectory": {
+    "t_max": 3.0,
+    "x0": 0.0,
+    "y0": 0.0,
+    "z0": 0.0,
+    "v0": 70.0,
+    "launch_angle_deg": 15.0,
+    "azimuth_deg": 15.0,
+    "side_spin_rpm": -2000.0,
+    "back_spin_rpm": 3000.0,
+    "dt": 0.01
+  },
+  "projection": {
+    "width": 1080,
+    "height": 1920,
+    "fov_deg": 45.0,
+    "cam_pos": [
+      -5.0,
+      0.0,
+      2.0
+    ],
+    "cam_euler": [
+      0.0,
+      -15.0,
+      0.0
+    ]
+  },
+  "expected": {
+    "keyframes": {
+      "count": 301,
+      "first": {
+        "x": 0.44722222222222224,
+        "y": 0.5213541666666667
+      },
+      "middle": {
+        "x": 0.636553737107195,
+        "y": 0.03955454499863029
+      },
+      "last": {
+        "x": 0.5320298469221068,
+        "y": 0.05074854882938307
+      }
+    },
+    "keyframe_tol": 1e-06
+  }
+}
