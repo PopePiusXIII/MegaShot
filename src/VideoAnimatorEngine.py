@@ -348,6 +348,22 @@ def project_to_keyframe(x, y, z, width=1080, height=1920, fov_deg=45, cam_pos=(-
 if __name__ == "__main__":
     # Example usage: Golf ball trajectory animation using GolfBallTrajectory class
     engine = VideoAnimationEngine("tests/data/videos/golfVideo.MOV")
+    start_keyframe_time = 2.0
+
+    # Find golf ball in the start keyframe and use it as the first golf point
+    start_frame = engine.get_frame_at_time(start_keyframe_time)
+    first_golf_point = None
+    if start_frame is not None:
+        detection = engine.find_golf_ball_in_keyframe(start_frame)
+        if detection is not None:
+            det_x, det_y, _ = detection
+            h, w = start_frame.shape[:2]
+            first_golf_point = (det_x / float(w), det_y / float(h))
+            print(f"Detected start golf point: x={first_golf_point[0]:.4f}, y={first_golf_point[1]:.4f}")
+        else:
+            print("No golf ball detected at start keyframe; using simulated start point.")
+    else:
+        print("Could not read start keyframe; using simulated start point.")
 
     # Generate keyframes from golf ball trajectory
     T_max = 3.0  # seconds
@@ -362,16 +378,27 @@ if __name__ == "__main__":
         dt=0.01
     )
     traj.sim()
+
+    # Offset the whole trajectory to align simulated start with detected first golf point
+    offset_x = 0.0
+    offset_y = 0.0
+    if first_golf_point is not None and len(traj.body.x) > 0:
+        sim_start_x, sim_start_y = project_to_keyframe(traj.body.x[0], traj.body.y[0], traj.body.z[0])
+        offset_x = first_golf_point[0] - sim_start_x
+        offset_y = first_golf_point[1] - sim_start_y
+
     for i in range(len(traj.t)):
         t = traj.t[i]
-        x, y, z = traj.x[i], traj.y[i], traj.z[i]
+        x, y, z = traj.body.x[i], traj.body.y[i], traj.body.z[i]
         norm_x, norm_y = project_to_keyframe(x, y, z)
+        norm_x = float(np.clip(norm_x + offset_x, 0.0, 1.0))
+        norm_y = float(np.clip(norm_y + offset_y, 0.0, 1.0))
         color = (255, 0, 0) 
         brush_size = 1.0
         engine.add_keyframe({'timestamp': t, 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})
 
-    # Align the trajectory start time to 0 seconds
-    engine.set_keyframes_start_time(2.0)
+    # Align trajectory start time to the chosen start keyframe time
+    engine.set_keyframes_start_time(start_keyframe_time)
 
     # Save a video showing the golf ball trajectory animation over time using the new method
     output_video_path = "golfVideoOut.mp4"

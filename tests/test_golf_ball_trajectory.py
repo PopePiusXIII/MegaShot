@@ -19,7 +19,7 @@ def test_golf_ball_lands():
                 back_spin_rpm=bs
             )
             traj.sim()
-            assert np.any(traj.z <= 0), f"Ball did not land for speed={v0}, spin={bs}"
+            assert np.any(traj.body.z <= 0), f"Ball did not land for speed={v0}, spin={bs}"
 
 def test_golf_ball_max_height_increases_with_speed():
     """Verify apex height increases with initial speed."""
@@ -37,7 +37,7 @@ def test_golf_ball_max_height_increases_with_speed():
             back_spin_rpm=3000
         )
         traj.sim()
-        heights.append(np.max(traj.z))
+        heights.append(np.max(traj.body.z))
     assert heights[0] < heights[1] < heights[2], f"Max height does not increase with speed: {heights}"
 
 def test_simulation_deterministic_delta():
@@ -56,9 +56,9 @@ def test_simulation_deterministic_delta():
     traj_b = GolfBallTrajectory(**params)
     traj_a.sim()
     traj_b.sim()
-    max_dx = float(np.max(np.abs(traj_a.x - traj_b.x)))
-    max_dy = float(np.max(np.abs(traj_a.y - traj_b.y)))
-    max_dz = float(np.max(np.abs(traj_a.z - traj_b.z)))
+    max_dx = float(np.max(np.abs(traj_a.body.x - traj_b.body.x)))
+    max_dy = float(np.max(np.abs(traj_a.body.y - traj_b.body.y)))
+    max_dz = float(np.max(np.abs(traj_a.body.z - traj_b.body.z)))
     assert max_dx < 1e-12 and max_dy < 1e-12 and max_dz < 1e-12, (
         f"Determinism regression: max_dx={max_dx}, max_dy={max_dy}, max_dz={max_dz}"
     )

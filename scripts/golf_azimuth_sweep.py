@@ -60,12 +60,12 @@ if __name__ == "__main__":
             )
             traj.sim()
             prev_azimuth = azimuth
-            all_trajs.append((traj.x.copy(), traj.y.copy(), traj.z.copy()))
+            all_trajs.append((traj.body.x.copy(), traj.body.y.copy(), traj.body.z.copy()))
             all_azimuths.append(azimuth)
         # Add all trajectory points up to current time as keyframes
         engine.clear_keyframes()
         for i in range(len(traj.t)):
-            norm_x, norm_y = project_to_keyframe(traj.x[i], traj.y[i], traj.z[i])
+            norm_x, norm_y = project_to_keyframe(traj.body.x[i], traj.body.y[i], traj.body.z[i])
             color = (0, 255, 255)
             brush_size = 1.0
             engine.add_keyframe({'timestamp': traj.t[i], 'x': norm_x, 'y': norm_y, 'color': color, 'brush_size': brush_size})

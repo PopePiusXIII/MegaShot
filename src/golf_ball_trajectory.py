@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import namedtuple
+from three_d_body import ThreeDBody
 
 def Cd_func(spin_rpm):
     # Cd increases with spin rate: 0.18 (low spin) to 0.30 (high spin)
@@ -47,9 +48,12 @@ class GolfBallTrajectory:
         self.tau_spin = 8.0
         # Allocate arrays (will be filled in sim)
         self.t = np.zeros(self.n_steps)
-        self.x = np.zeros(self.n_steps)
-        self.y = np.zeros(self.n_steps)
-        self.z = np.zeros(self.n_steps)
+        self.body = ThreeDBody(
+            name="golf_ball",
+            x=np.zeros(self.n_steps),
+            y=np.zeros(self.n_steps),
+            z=np.zeros(self.n_steps),
+        )
         self.vx = np.zeros(self.n_steps)
         self.vy = np.zeros(self.n_steps)
         self.vz = np.zeros(self.n_steps)
@@ -57,7 +61,7 @@ class GolfBallTrajectory:
         self.cl = np.zeros(self.n_steps)
         self.cd = np.zeros(self.n_steps)
 
-    def sim(self):
+    def sim(self, body_name: str = "golf_ball") -> ThreeDBody:
         theta = np.radians(self.launch_angle_deg)
         phi = np.radians(self.azimuth_deg)
         vx = self.v0 * np.cos(theta) * np.cos(phi)
@@ -75,9 +79,9 @@ class GolfBallTrajectory:
                 Cd = Cd_func(spin_rpm)
                 Cl = C_lift_func(spin_rpm)
             self.t[i] = i * self.dt
-            self.x[i] = px
-            self.y[i] = py
-            self.z[i] = pz
+            self.body.x[i] = px
+            self.body.y[i] = py
+            self.body.z[i] = pz
             self.vx[i] = vx_
             self.vy[i] = vy_
             self.vz[i] = vz_
@@ -85,9 +89,9 @@ class GolfBallTrajectory:
             self.cl[i] = Cl
             self.cd[i] = Cd
             if pz <= 0 and i > 0:
-                self.x = self.x[:i+1]
-                self.y = self.y[:i+1]
-                self.z = self.z[:i+1]
+                self.body.x = self.body.x[:i+1]
+                self.body.y = self.body.y[:i+1]
+                self.body.z = self.body.z[:i+1]
                 self.vx = self.vx[:i+1]
                 self.vy = self.vy[:i+1]
                 self.vz = self.vz[:i+1]
@@ -99,6 +103,12 @@ class GolfBallTrajectory:
             state = rk4_step(self._deriv, state, self.t[i], self.dt)
             if state[2] < 0:
                 state[2] = 0
+
+        return self.to_3d_body(body_name)
+
+    def to_3d_body(self, name: str = "golf_ball") -> ThreeDBody:
+        self.body.name = name
+        return self.body
 
     def _deriv(self, state, t):
         px, py, pz, vx_, vy_, vz_, omega_side_rpm, omega_back_rpm = state
@@ -131,9 +141,9 @@ class GolfBallTrajectory:
     def log_variables(self):
         return {
             't': self.t,
-            'x': self.x,
-            'y': self.y,
-            'z': self.z,
+            'x': self.body.x,
+            'y': self.body.y,
+            'z': self.body.z,
             'vx': self.vx,
             'vy': self.vy,
             'vz': self.vz,

@@ -23,7 +23,7 @@ def test_projected_path_in_bounds():
     traj.sim()
     norm_x = []
     norm_y = []
-    for x, y, z in zip(traj.x, traj.y, traj.z):
+    for x, y, z in zip(traj.body.x, traj.body.y, traj.body.z):
         nx, ny = project_to_keyframe(x, y, z)
         norm_x.append(nx)
         norm_y.append(ny)
@@ -52,7 +52,7 @@ def test_projected_path_monotonic():
     )
     traj.sim()
     norm_x = []
-    for x, y, z in zip(traj.x, traj.y, traj.z):
+    for x, y, z in zip(traj.body.x, traj.body.y, traj.body.z):
         nx, ny = project_to_keyframe(x, y, z)
         norm_x.append(nx)
     norm_x = np.array(norm_x)
