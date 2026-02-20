@@ -32,8 +32,8 @@ def plot_trajectories():
                 back_spin_rpm=bs,
             )
             traj.sim()
-            x_ft = traj.x * 3.28084
-            z_ft = traj.z * 3.28084
+            x_ft = traj.body.x * 3.28084
+            z_ft = traj.body.z * 3.28084
             label = f"{bs} rpm, {v0} m/s" if i == 0 else None
             plt.plot(x_ft, z_ft, color=colors[j], linestyle=linestyles[i], label=label)
 
